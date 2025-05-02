@@ -157,4 +157,4 @@ def update_graph(n_clicks, formula, den_in, t_mm, e_str):
     return name, note, trans_fig, db_fig, f"{rho:.4g}"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8060)
