@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Log files
+*.log
+.loglogin
+
+# CSV data files
+*_results.csv
+*_multilayer_*.csv
+
+# Multilayer scripts
+ml.py
+ml_alba.py
