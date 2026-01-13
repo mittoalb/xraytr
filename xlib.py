@@ -75,6 +75,18 @@ tab1_content = html.Div([
         dcc.Input(id='thickness', type='number', value=1.0, style={'margin-right':'20px'}),
         html.Label("Energy (keV start:stop:step):", style={'color':'white'}),
         dcc.Input(id='energy', type='text', value='8.0:20.0:0.5')
+    ], style={'display':'flex','alignItems':'center','margin-bottom':'10px'}),
+    html.Div([
+        html.Label("Plot mode:", style={'color':'white','margin-right':'10px'}),
+        dcc.RadioItems(
+            id='plot-mode',
+            options=[
+                {'label': 'δ & β separate', 'value': 'separate'},
+                {'label': 'δ/β ratio', 'value': 'ratio'}
+            ],
+            value='separate',
+            labelStyle={'display': 'inline-block', 'margin-right': '20px', 'color': 'white'}
+        )
     ], style={'display':'flex','alignItems':'center','margin-bottom':'20px'}),
     html.Button('Compute', id='compute-btn', n_clicks=0, style={'margin-bottom':'20px'}),
     dcc.Graph(id='trans-plot', style={'height':'45vh'}),
@@ -259,9 +271,10 @@ def update_edge_table(search_term, edge_type, energy_min, energy_max, clear_clic
      Output('density-input','value')],
     [Input('compute-btn','n_clicks')],
     [State('formula','value'), State('density-input','value'),
-     State('thickness','value'), State('energy','value')]
+     State('thickness','value'), State('energy','value'),
+     State('plot-mode','value')]
 )
-def update_graph(n_clicks, formula, den_in, t_mm, e_str):
+def update_graph(n_clicks, formula, den_in, t_mm, e_str, plot_mode):
     E = parse_energies(e_str)
     if not formula or E.size == 0:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, den_in
@@ -338,16 +351,25 @@ def update_graph(n_clicks, formula, den_in, t_mm, e_str):
     beta = n_imag
 
     y_max_T = np.nanmax(T) if T.size else 1.0
-    y_max_db = max(np.nanmax(delta), np.nanmax(beta)) if delta.size else 1.0
     grid = dict(showgrid=True, gridcolor='gray', gridwidth=1, griddash='dash')
     base = {'paper_bgcolor':'black','plot_bgcolor':'black','font':{'color':'white','size':14},'margin':{'l':60,'r':20,'t':50,'b':60}}
 
     trans_fig = {'data':[{'x':E,'y':T,'mode':'lines+markers','line':{'color':'cyan'}}],
                  'layout':{**base,'xaxis':{**grid,'title':'Energy (keV)','tickformat':'.3g'},
-                           'yaxis':{**grid,'title':'T','range':[0,y_max_T*1.05],'tickformat':'.2e'}}}
-    db_fig = {'data':[{'x':E,'y':delta,'name':'δ'},{'x':E,'y':beta,'name':'β'}],
-              'layout':{**base,'xaxis':{**grid,'title':'Energy (keV)','tickformat':'.3g'},
-                        'yaxis':{**grid,'title':'δ & β','range':[0,y_max_db*1.05],'tickformat':'.2e'}}}
+                           'yaxis':{**grid,'title':'T', 'range':[0,y_max_T*1.05],'tickformat':'.2e'}}}
+
+    # Choose plot based on mode
+    if plot_mode == 'ratio':
+        ratio = np.divide(delta, beta, out=np.zeros_like(delta), where=beta!=0)
+        y_max_ratio = np.nanmax(ratio) if ratio.size else 1.0
+        db_fig = {'data':[{'x':E,'y':ratio,'mode':'lines+markers','line':{'color':'orange'},'name':'δ/β'}],
+                  'layout':{**base,'xaxis':{**grid,'title':'Energy (keV)','tickformat':'.3g'},
+                            'yaxis':{**grid,'title':'δ/β ratio','range':[0,y_max_ratio*1.05],'tickformat':'.2e'}}}
+    else:  # separate
+        y_max_db = max(np.nanmax(delta), np.nanmax(beta)) if delta.size else 1.0
+        db_fig = {'data':[{'x':E,'y':delta,'name':'δ'},{'x':E,'y':beta,'name':'β'}],
+                  'layout':{**base,'xaxis':{**grid,'title':'Energy (keV)','tickformat':'.3g'},
+                            'yaxis':{**grid,'title':'δ & β','range':[0,y_max_db*1.05],'tickformat':'.2e'}}}
 
     return name, note, trans_fig, db_fig, f"{rho:.4g}"
 

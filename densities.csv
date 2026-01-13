@@ -12,5 +12,10 @@ NH3,0.00073,Ammonia (gas at STP)
 Bi,9.747,Bi
 Cu,8.96,Cu
 H2S,1,H2S
+<<<<<<< HEAD
 OsO4,4.9,OsO4
 Co,8.9,Co
+=======
+OsO4,1,OsO4
+Si,2.65,Si
+>>>>>>> 6bb79cc (add delta/beta ratio)
